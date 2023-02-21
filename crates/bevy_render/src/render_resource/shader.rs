@@ -398,10 +398,7 @@ impl ShaderProcessor {
             Source::Wgsl(source) => source.deref(),
             Source::Glsl(source, _stage) => source.deref(),
             Source::SpirV(source) => {
-                if shader_defs.is_empty() {
-                    return Ok(ProcessedShader::SpirV(source.clone()));
-                }
-                return Err(ProcessShaderError::ShaderFormatDoesNotSupportShaderDefs);
+                return Ok(ProcessedShader::SpirV(source.clone()));
             }
         };
 
