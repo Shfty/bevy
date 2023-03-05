@@ -221,6 +221,7 @@ pub struct ShadowPipeline {
     pub skinned_mesh_layout: BindGroupLayout,
     pub point_light_sampler: Sampler,
     pub directional_light_sampler: Sampler,
+    pub shader_defs: Vec<String>,
 }
 
 // TODO: this pattern for initializing the shaders / pipeline isn't ideal. this should be handled by the asset system
@@ -248,6 +249,8 @@ impl FromWorld for ShadowPipeline {
         let mesh_pipeline = world.resource::<MeshPipeline>();
         let skinned_mesh_layout = mesh_pipeline.skinned_mesh_layout.clone();
 
+        let shader_defs = platform_shader_defs(&render_device);
+
         ShadowPipeline {
             view_layout,
             mesh_layout: mesh_pipeline.mesh_layout.clone(),
@@ -272,6 +275,7 @@ impl FromWorld for ShadowPipeline {
                 compare: Some(CompareFunction::GreaterEqual),
                 ..Default::default()
             }),
+            shader_defs,
         }
     }
 }
@@ -320,7 +324,7 @@ impl SpecializedMeshPipeline for ShadowPipeline {
         let mut vertex_attributes = vec![Mesh::ATTRIBUTE_POSITION.at_shader_location(0)];
 
         let mut bind_group_layout = vec![self.view_layout.clone()];
-        let mut shader_defs = Vec::new();
+        let mut shader_defs = self.shader_defs.clone();
 
         if layout.contains(Mesh::ATTRIBUTE_JOINT_INDEX)
             && layout.contains(Mesh::ATTRIBUTE_JOINT_WEIGHT)

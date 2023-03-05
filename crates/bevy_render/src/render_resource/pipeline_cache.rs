@@ -149,33 +149,13 @@ impl ShaderCache {
         let module = match data.processed_shaders.entry(shader_defs.to_vec()) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
-                let mut shader_defs = shader_defs.to_vec();
-                #[cfg(feature = "webgl")]
-                {
-                    shader_defs.push(String::from("NO_ARRAY_TEXTURES_SUPPORT"));
-                    shader_defs.push(String::from("SIXTEEN_BYTE_ALIGNMENT"));
-                }
-
-                // TODO: 3 is the value from CLUSTERED_FORWARD_STORAGE_BUFFER_COUNT declared in bevy_pbr
-                // consider exposing this in shaders in a more generally useful way, such as:
-                // # if AVAILABLE_STORAGE_BUFFER_BINDINGS == 3
-                // /* use storage buffers here */
-                // # elif
-                // /* use uniforms here */
-                if !matches!(
-                    render_device.get_supported_read_only_binding_type(3),
-                    BufferBindingType::Storage { .. }
-                ) {
-                    shader_defs.push(String::from("NO_STORAGE_BUFFERS_SUPPORT"));
-                }
-
                 debug!(
                     "processing shader {:?}, with shader defs {:?}",
                     handle, shader_defs
                 );
                 let processed = self.processor.process(
                     shader,
-                    &shader_defs,
+                    shader_defs,
                     &self.shaders,
                     &self.import_path_shaders,
                 )?;
@@ -272,6 +252,31 @@ impl ShaderCache {
 
         pipelines_to_queue
     }
+}
+
+pub fn platform_shader_defs(render_device: &RenderDevice) -> Vec<String> {
+    let mut shader_defs = Vec::new();
+
+    #[cfg(feature = "webgl")]
+    {
+        shader_defs.push(String::from("NO_ARRAY_TEXTURES_SUPPORT"));
+        shader_defs.push(String::from("SIXTEEN_BYTE_ALIGNMENT"));
+    }
+
+    // TODO: 3 is the value from CLUSTERED_FORWARD_STORAGE_BUFFER_COUNT declared in bevy_pbr
+    // consider exposing this in shaders in a more generally useful way, such as:
+    // # if AVAILABLE_STORAGE_BUFFER_BINDINGS == 3
+    // /* use storage buffers here */
+    // # elif
+    // /* use uniforms here */
+    if !matches!(
+        render_device.get_supported_read_only_binding_type(3),
+        BufferBindingType::Storage { .. }
+    ) {
+        shader_defs.push(String::from("NO_STORAGE_BUFFERS_SUPPORT"));
+    }
+
+    shader_defs
 }
 
 #[derive(Default)]
