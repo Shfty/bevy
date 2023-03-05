@@ -21,8 +21,7 @@ use parking_lot::Mutex;
 use std::{hash::Hash, iter::FusedIterator, mem, ops::Deref};
 use thiserror::Error;
 use wgpu::{
-    PipelineLayoutDescriptor, PushConstantRange,
-    VertexBufferLayout as RawVertexBufferLayout,
+    PipelineLayoutDescriptor, PushConstantRange, VertexBufferLayout as RawVertexBufferLayout,
 };
 
 use crate::render_resource::resource_macros::*;
