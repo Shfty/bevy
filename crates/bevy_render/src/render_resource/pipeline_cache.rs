@@ -21,7 +21,8 @@ use parking_lot::Mutex;
 use std::{hash::Hash, iter::FusedIterator, mem, ops::Deref};
 use thiserror::Error;
 use wgpu::{
-    PipelineLayoutDescriptor, PushConstantRange, VertexBufferLayout as RawVertexBufferLayout,
+    PipelineLayoutDescriptor, PushConstantRange,
+    VertexBufferLayout as RawVertexBufferLayout,
 };
 
 use crate::render_resource::resource_macros::*;
@@ -193,25 +194,13 @@ impl ShaderCache {
         let module = match data.processed_shaders.entry(shader_defs.to_vec()) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
-                let mut shader_defs = shader_defs.to_vec();
-                #[cfg(feature = "webgl")]
-                {
-                    shader_defs.push("NO_ARRAY_TEXTURES_SUPPORT".into());
-                    shader_defs.push("SIXTEEN_BYTE_ALIGNMENT".into());
-                }
-
-                shader_defs.push(ShaderDefVal::UInt(
-                    String::from("AVAILABLE_STORAGE_BUFFER_BINDINGS"),
-                    render_device.limits().max_storage_buffers_per_shader_stage,
-                ));
-
                 debug!(
                     "processing shader {:?}, with shader defs {:?}",
                     handle, shader_defs
                 );
                 let processed = self.processor.process(
                     shader,
-                    &shader_defs,
+                    shader_defs,
                     &self.shaders,
                     &self.import_path_shaders,
                 )?;
@@ -310,7 +299,26 @@ impl ShaderCache {
     }
 }
 
+// Utility function for initializing a set of platform-driven shader defs from a render device
+pub fn platform_shader_defs(render_device: &RenderDevice) -> Vec<ShaderDefVal> {
+    let mut shader_defs = Vec::new();
+
+    #[cfg(feature = "webgl")]
+    {
+        shader_defs.push("NO_ARRAY_TEXTURES_SUPPORT".into());
+        shader_defs.push("SIXTEEN_BYTE_ALIGNMENT".into());
+    }
+
+    shader_defs.push(ShaderDefVal::UInt(
+        String::from("AVAILABLE_STORAGE_BUFFER_BINDINGS"),
+        render_device.limits().max_storage_buffers_per_shader_stage,
+    ));
+
+    shader_defs
+}
+
 type LayoutCacheKey = (Vec<BindGroupLayoutId>, Vec<PushConstantRange>);
+
 #[derive(Default)]
 struct LayoutCache {
     layouts: HashMap<LayoutCacheKey, ErasedPipelineLayout>,

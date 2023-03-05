@@ -33,7 +33,7 @@ use bevy_render::{
         ShaderType, SpecializedMeshPipeline, SpecializedMeshPipelineError,
         SpecializedMeshPipelines, StencilFaceState, StencilState, TextureDescriptor,
         TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureViewDimension,
-        VertexState,
+        VertexState, platform_shader_defs,
     },
     renderer::RenderDevice,
     texture::{FallbackImagesDepth, FallbackImagesMsaa, TextureCache},
@@ -154,6 +154,7 @@ pub struct PrepassPipeline<M: Material> {
     pub material_vertex_shader: Option<Handle<Shader>>,
     pub material_fragment_shader: Option<Handle<Shader>>,
     pub material_pipeline: MaterialPipeline<M>,
+    pub shader_defs: Vec<ShaderDefVal>,
     _marker: PhantomData<M>,
 }
 
@@ -181,6 +182,8 @@ impl<M: Material> FromWorld for PrepassPipeline<M> {
 
         let mesh_pipeline = world.resource::<MeshPipeline>();
 
+        let shader_defs = platform_shader_defs(render_device);
+
         PrepassPipeline {
             view_layout,
             mesh_layout: mesh_pipeline.mesh_layout.clone(),
@@ -197,6 +200,7 @@ impl<M: Material> FromWorld for PrepassPipeline<M> {
             },
             material_layout: M::bind_group_layout(render_device),
             material_pipeline: world.resource::<MaterialPipeline<M>>().clone(),
+            shader_defs,
             _marker: PhantomData,
         }
     }
@@ -214,7 +218,7 @@ where
         layout: &MeshVertexBufferLayout,
     ) -> Result<RenderPipelineDescriptor, SpecializedMeshPipelineError> {
         let mut bind_group_layout = vec![self.view_layout.clone()];
-        let mut shader_defs = Vec::new();
+        let mut shader_defs = self.shader_defs.clone();
         let mut vertex_attributes = Vec::new();
 
         // NOTE: Eventually, it would be nice to only add this when the shaders are overloaded by the Material.

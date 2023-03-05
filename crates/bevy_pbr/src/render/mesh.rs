@@ -268,6 +268,7 @@ pub struct MeshPipeline {
     // This dummy white texture is to be used in place of optional StandardMaterial textures
     pub dummy_white_gpu_image: GpuImage,
     pub clustered_forward_buffer_binding_type: BufferBindingType,
+    pub shader_defs: Vec<ShaderDefVal>,
 }
 
 impl FromWorld for MeshPipeline {
@@ -527,6 +528,9 @@ impl FromWorld for MeshPipeline {
             }
         };
 
+        // Shader defs
+        let shader_defs = platform_shader_defs(&render_device);
+
         MeshPipeline {
             view_layout,
             view_layout_multisampled,
@@ -534,6 +538,7 @@ impl FromWorld for MeshPipeline {
             skinned_mesh_layout,
             clustered_forward_buffer_binding_type,
             dummy_white_gpu_image,
+            shader_defs,
         }
     }
 }
@@ -649,7 +654,7 @@ impl SpecializedMeshPipeline for MeshPipeline {
         key: Self::Key,
         layout: &MeshVertexBufferLayout,
     ) -> Result<RenderPipelineDescriptor, SpecializedMeshPipelineError> {
-        let mut shader_defs = Vec::new();
+        let mut shader_defs = self.shader_defs.clone();
         let mut vertex_attributes = Vec::new();
 
         if layout.contains(Mesh::ATTRIBUTE_POSITION) {
