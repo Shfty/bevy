@@ -42,6 +42,7 @@ default = [
   "bevy_sprite",
   "bevy_text",
   "bevy_ui",
+  "spirv_shader_passthrough",
   "png",
   "hdr",
   "ktx2",
@@ -97,6 +98,9 @@ bevy_ui = ["bevy_internal/bevy_ui"]
 
 # winit window and input backend
 bevy_winit = ["bevy_internal/bevy_winit"]
+
+# Enables SPIR-V shader passthrough
+spirv_shader_passthrough = ["bevy_internal/spirv_shader_passthrough"]
 
 # Tracing support, saving a file in Chrome Tracing format
 trace_chrome = ["trace", "bevy_internal/trace_chrome"]
